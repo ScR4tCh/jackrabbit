@@ -1,5 +1,7 @@
 """
 JackRabbit decorated route defined threaded rabbitmq consumers
+
+TODO: only BlockingConnection for now ... enable and test asyncio using SelectConnection !
 """
 import logging
 import time
@@ -10,7 +12,7 @@ from pika.exceptions import AMQPConnectionError
 
 logger = logging.getLogger('jackrabbit')
 
-# simple types
+# simple types ... globals ... meh!
 TYPES = ['int', 'string']
 VAR = re.compile("<(?P<var>\\w+)(\\:(?P<type>((%s)|re\\:(?P<regex>.+)))){0,1}>" % '|'.join(TYPES))
 ROUTE = re.compile("(\\w+|<.*>|\\*)")
@@ -62,7 +64,7 @@ class JackRabbit(object):
             self.channel_in.exchange_declare(exchange=self.exchange, durable=False, exchange_type='topic')
         except:
             # delete and retry !
-            logger.info('redeclaring exchange %s' % self.exchange)
+            logger.info('re-declaring exchange %s' % self.exchange)
             self.channel_in = self.conn.channel()
             self.channel_in.exchange_delete(self.exchange)
             self.channel_in.exchange_declare(exchange=self.exchange, durable=False, exchange_type='topic')
@@ -83,7 +85,7 @@ class JackRabbit(object):
             self.init_queues()
 
             # re-init attached consumers TODO: TEST !
-            for k, v in self.consumers.iteritems():
+            for k, v in self.consumers.items():
                 for i in range(0, len(v)):
                     consumer = v[i]
                     #logger.info('activation state of consumer %s : %s -> %s' % (k, consumer, 'active' if consumer.active else 'inactive'))
@@ -123,20 +125,6 @@ class JackRabbit(object):
 
     def publish(self, msg, routing_key=None, content_type=None):
         msg_props = pika.BasicProperties(content_type=content_type)
-        """
-        if(type(msg) == dict):
-            msg = dump(msg)
-
-        if (self.connected and self.conn.is_open):
-            try:
-                self.channel_out.basic_publish(exchange=OUT_EXCH, body=msg,
-                                               properties=msg_props, routing_key=routing_key)
-            except AMQPConnectionError:
-                logger.warn('reconnecting to rmq')
-                self._rmq_connect()
-        else:
-            self._rmq_connect()
-        """
 
     def receive(self, channel, method, props, body):
         try:
@@ -207,7 +195,7 @@ class Consumer(threading.Thread):
                         self.declareq, autostart, self.callback_args)
 
 
-# TODO: add simpler possebility to add custom variable trypes
+# TODO: add simpler possebility to add custom "variable"-types
 def create_check_fn(match):
     var = match.group('var')
     t = match.group('type')
@@ -246,8 +234,7 @@ def prepare_routing_key(routing_key):
         rkey += ['*' if m else r]
 
     logger.debug('route %s prepared to consume all matching %s' % (routing_key, '.'.join(rkey)))
-    return ('.'.join(rkey), ret)
-
+    return '.'.join(rkey), ret
 
 
 def _wrap_callback(fun, jackrabbit, routing, method, props, body):

@@ -12,19 +12,24 @@ jr = jackrabbit.JackRabbit('foo', 'localhost', '/', 'rabbit', 'rabbit')
 
 @jr.consume('foo.bar')
 def foo_consume(route, jackrabbit, msg):
-    print "foo %s -> %s" % (route, msg)
+    print("foo %s -> %s" % (route, msg))
+
 
 @jr.consume('foo.bar.baz')
 def foo2_consume(route, jackrabbit, msg):
-    print "foo2 %s -> %s" % (route, msg)
+    print("foo2 %s -> %s" % (route, msg))
+
 
 @jr.consume('foo.bar.*')
 def foo3_consume(route, jackrabbit, msg):
-    print "foo3 %s -> %s" % (route, msg)
+    print("foo3 %s -> %s" % (route, msg))
+
 
 @jr.consume('foo.bar.baz.<id:int>')
 def foo4_consume(route, jackrabbit, msg, id):
-    print "foo4 %s -> %s for %s" % (route, msg, id)
+    print("foo4 %s -> %s for %s" % (route, msg, id))
+
+
 
 if __name__ == '__main__':
     while(True):

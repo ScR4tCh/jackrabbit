@@ -17,6 +17,5 @@ setup(
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
   ],
-  install_requires=['pika'],
-  packages=find_packages(exclude=['doc', 'test']),
+  install_requires=['pika']
 )
